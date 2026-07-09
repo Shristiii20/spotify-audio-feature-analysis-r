@@ -1,0 +1,1144 @@
+\documentclass[12pt,a4paper]{article}
+% !TeX program = pdflatex
+% !BIB program = bibtex
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage[round]{natbib}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{tocloft}
+\usepackage{titlesec}
+\usepackage{rotating}
+\usepackage[none]{hyphenat}
+\usepackage[skip=6pt]{caption}
+\usepackage{tocloft}
+\setlength{\cftsubsecnumwidth}{3em}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single
+}
+
+\geometry{margin=1in}
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\setlength{\cftbeforesecskip}{5pt}
+\setlength{\cftbeforesubsecskip}{2pt}
+\newcommand{\sectionbreak}{\clearpage}
+
+\begin{document}
+% =============================================================
+\begin{titlepage}
+\centering
+
+\vspace*{\fill}   % pushes content to vertical center
+
+{\Large \textbf{Analyzing Global Music Trends Using Spotify Audio Features:}\\[0.4cm]
+\textbf{A Data-Driven Analysis in R}}
+
+\vspace{1.2cm}
+
+{\large Shristi}\\[0.2cm]
+\textit{Author}
+
+\vspace{0.4cm}
+
+B.Tech, Computer Science and Engineering with Specialization in Data Science\\[0.3cm]
+Indian Institute of Information Technology Una\\
+Himachal Pradesh, India
+
+\vspace{0.8cm}
+{\large Dr. Prince Sharma}\\[0.2cm]
+\textit{Co-Author}
+
+\vspace*{\fill}   % balances bottom
+
+\end{titlepage}
+\setcounter{page}{1}
+% =============================================================
+
+\newpage
+\section*{Abstract}
+
+\begin{spacing}{1.2}
+\noindent
+The widespread adoption of digital music streaming platforms has created unprecedented opportunities to analyze large-scale music consumption data. This study investigates global music trends by analyzing Spotify track data using statistical and visualization techniques implemented in R. The objective is to explore how various audio features, including danceability, energy, valence, acousticness, and tempo, relate to song popularity and how these characteristics have evolved across different release periods.
+
+\vspace{0.5em}
+
+The analysis uses a publicly available dataset of Spotify tracks and follows a structured data analytics workflow comprising data preprocessing, exploratory data analysis, correlation analysis, and feature-based trend visualization. Using R packages such as the tidyverse, ggplot2, and dplyr, the study examines relationships between musical attributes and listener engagement and identifies patterns that characterise highly popular tracks.
+
+\vspace{0.5em}
+
+Visual analytics techniques are employed to reveal temporal changes in audio feature distributions and highlight potential associations between musical structure and audience preferences. Findings show that danceability is the strongest positive predictor, 
+while speechiness, valence, and instrumentalness show significant 
+negative associations with popularity.
+
+\vspace{0.5em}
+
+This study demonstrates the effectiveness of R as a flexible platform for large-scale music data analysis and illustrates how data mining and visualization methods can provide valuable insights into modern music consumption patterns. The findings contribute to a broader understanding of how data-driven approaches can be applied to analyze trends in the digital music ecosystem.
+\end{spacing}
+
+\clearpage
+
+% ===== CONTENTS =====
+\clearpage
+\begingroup
+\setstretch{1.1}
+\tableofcontents
+\setlength{\cftbeforesecskip}{6pt}
+\endgroup
+\clearpage
+% =============================================================
+% 
+%=============================================================
+\section{Introduction}
+%=============================================================
+
+\subsection{Background of Music Streaming Platforms}
+
+The global music industry has undergone a significant transformation over
+the past decade. Digital streaming platforms have largely replaced
+physical sales and downloads as the primary mode of music consumption
+worldwide. Among these platforms, Spotify, launched in 2008, is one of the leading services, offering access to millions of tracks
+across a wide range of genres and languages \citep{spotify2023}. Recent
+estimates suggest that the platform hosts over 100 million tracks and
+serves hundreds of millions of active users globally \citep{ifpi2023}.
+
+Unlike traditional broadcast media, streaming platforms generate
+continuous and highly detailed data on user behaviour. Every
+interaction---such as plays, skips, saves, and playlist additions—is
+recorded and stored. Spotify provides access to a subset of this data
+through its Web API, which includes several computed audio features.
+These features, such as \textit{danceability}, \textit{energy}, and
+\textit{valence}, represent different musical characteristics in
+numerical form. Additionally, a \textit{popularity} score, ranging from
+0 to 100, indicates the relative level of listener engagement for each
+track \citep{spotifyapi2023}.
+
+\subsection{Importance of Data-Driven Music Analysis}
+
+The availability of large-scale audio feature data enables a more
+systematic and data-driven approach to understanding music trends.
+Traditional music analysis methods are often qualitative and limited to
+small datasets, making it difficult to generalize findings. In contrast,
+modern data analysis techniques allow researchers to identify patterns
+across hundreds of thousands of tracks simultaneously \citep{schedl2014}.
+
+Understanding the relationship between audio features and popularity has
+important practical applications. Artists and producers can use these
+insights to create music that better aligns with audience preferences,
+while streaming platforms can improve their recommendation systems.
+From a research perspective, this approach contributes to the field of
+computational musicology by examining whether measurable audio features
+have a statistically significant impact on song popularity, beyond
+external factors such as marketing, timing, or social influence
+\citep{lamere2014,interiano2018}.
+
+In this study, a hierarchical regression model is applied to a large
+Spotify dataset obtained from Kaggle \citep{kaggle_spotify}. The analysis is carried out using
+the R programming language \citep{rcoreteam2023}, ensuring a structured, transparent, and
+reproducible workflow. The study aims to identify key audio features that
+influence song popularity and to understand how these relationships can
+be interpreted in a real-world context.
+% =============================================================
+% =============================================================
+\section{Problem Statement}
+% =============================================================
+
+Although Spotify audio features are widely used in exploratory data
+analysis, there is limited work that systematically evaluates their
+combined and incremental impact on song popularity using structured
+statistical models. Most existing studies rely on simple correlation
+analysis, single-model regression, or machine learning approaches that
+focus primarily on prediction accuracy rather than interpretability.
+
+As a result, there is a lack of clear understanding regarding how
+different groups of audio features contribute to popularity when
+considered together in a step-by-step manner.
+
+To address this gap, the present study focuses on the following research
+question:
+
+\begin{quote}
+\textbf{Which Spotify audio features have a statistically significant
+impact on song popularity, and how does the inclusion of different
+feature groups improve the explanatory power of the model?}
+\end{quote}
+
+By applying a hierarchical regression approach, this study aims to
+analyze the individual as well as combined effects of multiple audio
+features, providing a clearer and more interpretable understanding of
+their relationship with song popularity.
+% =============================================================
+\section{Objectives of the Study}
+% =============================================================
+
+The primary objective of this study is to analyze the relationship
+between Spotify audio features and song popularity using a structured
+data-driven approach.
+
+The specific objectives are as follows:
+
+\begin{enumerate}
+  \item To load, clean, and prepare the Spotify tracks dataset using
+        reproducible techniques in R.
+        
+  \item To perform exploratory data analysis (EDA) to understand
+        the distribution and behaviour of key audio features and the
+        popularity variable.
+        
+  \item To examine the relationships between different audio features
+        and song popularity using correlation analysis and visual
+        exploration.
+        
+  \item To develop a hierarchical regression model by introducing
+        features in multiple blocks and evaluating their incremental
+        contribution to explaining song popularity.
+        
+  \item To assess model performance using statistical measures such as
+        $R^2$, Adjusted $R^2$, and AIC.
+        
+  \item To interpret regression coefficients along with confidence
+        intervals to understand the direction and strength of
+        feature impact.
+        
+  \item To derive meaningful insights and conclusions based on the
+        statistical results and visual analysis.
+\end{enumerate}
+% =============================================================
+\section{Dataset Description}
+% =============================================================
+
+\subsection{Data Source}
+
+The dataset used in this study is \texttt{spotify\_tracks.csv}, which is
+publicly available on Kaggle. It has been compiled using the Spotify Web
+API and contains one record per track, along with multiple audio feature
+descriptors and metadata fields \citep{kaggle_spotify}.
+
+\subsection{Dataset Overview}
+
+After loading and applying the data cleaning process described in
+Section~\ref{sec:preprocessing}, the final dataset consisted of
+\textbf{114{,}000 observations} and \textbf{22 variables}. No missing
+values were found in the nine key variables used for analysis, ensuring a
+complete and reliable dataset for regression modelling.
+
+\subsection{Description of Key Features}
+
+The main variables used in the analysis are summarized in
+Table 1. These features represent different musical
+characteristics of a track and are provided directly by the Spotify API.
+
+\begin{table}[ht]
+\centering
+
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Variable}       & \textbf{Range} & \textbf{Description} \\
+\midrule
+\texttt{danceability}   & 0 -- 1 & Suitability of a track for dancing \\
+\texttt{energy}         & 0 -- 1 & Perceived intensity and activity level \\
+\texttt{valence}        & 0 -- 1 & Musical positiveness or mood \\
+\texttt{acousticness}   & 0 -- 1 & Likelihood that the track is acoustic \\
+\texttt{instrumentalness} & 0 -- 1 & Likelihood of absence of vocals \\
+\texttt{speechiness}    & 0 -- 1 & Presence of spoken words in the track \\
+\texttt{tempo}          & BPM    & Estimated tempo of the track \\
+\texttt{loudness}       & dBFS   & Overall loudness (typically negative) \\
+\midrule
+\texttt{popularity}     & 0 -- 100 & \textbf{Target (dependent) variable} \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.3cm}
+
+{\centering \textit{Table 1: Description of key Spotify audio features used in the analysis}\par}
+
+\label{tab:features}
+
+\end{table}
+
+\subsection{Target Variable: Popularity}
+
+The \texttt{popularity} score is a Spotify-generated integer ranging from
+0 to 100, where higher values indicate greater listener engagement and
+recent streaming activity \citep{spotifyapi2023}. 
+
+In the cleaned dataset, the popularity distribution is slightly
+right-skewed, with a mean of \textbf{33.24} and a standard deviation of
+\textbf{22.31}. The median value is 35, with observations ranging from 0
+to 100. The interquartile range lies between 17 and 50, indicating a wide
+variation in popularity levels and a relatively large number of
+low-popularity tracks.
+% =============================================================
+\section{Methodology}
+% =============================================================
+
+\subsection{Data Collection}
+
+The dataset used in this study was obtained from Kaggle in the form of a
+CSV file (\texttt{spotify\_tracks.csv}). It was originally compiled using
+the Spotify Web API and contains detailed information about individual
+tracks along with their corresponding audio features \citep{kaggle_spotify}.
+
+\subsection{Data Loading in R}
+The dataset was loaded into the R environment using functions from the
+\texttt{tidyverse} package. The \texttt{read\_csv()} function was used to
+import the data efficiently while preserving its structure.
+
+\begin{verbatim}
+library(tidyverse)
+library(janitor)
+
+df_raw <- read_csv("spotify_tracks.csv",
+                   show_col_types = FALSE)
+\end{verbatim}
+
+\subsection{Data Preprocessing}
+\label{sec:preprocessing}
+
+Data preprocessing was performed to ensure accuracy and consistency of
+the dataset. Column names were standardised into \texttt{snake\_case}
+format using the \texttt{janitor} package \citep{rcoreteam2023}. Missing values in key variables
+were removed using appropriate filtering techniques, and duplicate rows
+were eliminated to avoid redundancy in the analysis.
+
+\subsection{Exploratory Data Analysis (EDA)}
+
+Exploratory Data Analysis (EDA) was conducted to understand the
+distribution and relationships among variables. This included the
+calculation of descriptive statistics such as mean, median, and
+quartiles. Visual analysis was performed using histograms, scatter plots,
+and correlation matrices to identify patterns and trends in the data.
+
+\subsection{Statistical Analysis}
+
+To examine the relationship between audio features and song popularity,
+three hierarchical Ordinary Least Squares (OLS) regression models were
+constructed: 
+Specifically, Block 1 introduced rhythmic and mood features
+(\texttt{danceability}, \texttt{energy}, \texttt{valence}),
+Block 2 added acoustic texture features (\texttt{acousticness},
+\texttt{instrumentalness}, \texttt{speechiness}), and Block 3
+incorporated physical signal properties (\texttt{tempo}, \texttt{loudness}). Each model introduced additional groups of variables to
+evaluate their incremental contribution to the explanation of popularity.
+
+Model performance was assessed using statistical measures such as
+$R^2$, Adjusted $R^2$, and Akaike Information Criterion (AIC).
+Additionally, ANOVA tests were used to compare models and determine
+whether the inclusion of new variables significantly improved the model.
+
+\subsection{Data Visualization Approach}
+
+Data visualisation was carried out using the \texttt{ggplot2} package in
+R. Various plots such as histograms, scatter plots, and heatmaps were
+created to effectively represent patterns in the data. These visualisations were combined into a single dashboard using the
+\texttt{patchwork} package. A correlation heatmap was also generated
+using the \texttt{corrplot} package to highlight relationships among
+key variables.
+
+% =============================================================
+\section{Tools and Technologies Used}
+% =============================================================
+
+\subsection{Programming Language: R}
+
+All analyses were carried out using R (version 4.4.1), an open-source
+statistical programming language widely used for data analysis and
+visualization in academic and industry settings \citep{rcoreteam2023}.
+
+\subsection{Libraries and Packages}
+
+The following R packages were used for data processing, analysis, and
+visualization:
+
+\begin{table}[ht]
+\centering
+
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Package}   & \textbf{Version} & \textbf{Purpose} \\
+\midrule
+\texttt{tidyverse} & $\geq$ 2.0   & Data manipulation and visualization (\texttt{ggplot2}) \\
+\texttt{janitor}   & $\geq$ 2.2   & Cleaning and standardizing column names \\
+\texttt{broom}     & $\geq$ 1.0   & Converting model outputs into tidy format \\
+\texttt{corrplot}  & $\geq$ 0.92  & Creating correlation heatmaps \\
+\texttt{patchwork} & $\geq$ 1.2   & Combining multiple plots into one layout \\
+\texttt{scales}    & $\geq$ 1.3   & Formatting axes and labels in plots \\
+\texttt{viridis}   & $\geq$ 0.6   & Providing color-blind-friendly palettes \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.3cm}
+
+{\centering \textit{Table 2: R packages used in this study}\par}
+
+\label{tab:packages}
+
+\end{table}
+% =============================================================
+\section{Data Preprocessing}
+\label{sec:preprocessing}
+% =============================================================
+
+\subsection{Handling Missing Values}
+
+After standardizing column names using \texttt{clean\_names()} from the \texttt{janitor} package
+\citep{rcoreteam2023}, the
+dataset was examined for missing values in the nine key variables used
+for analysis. The inspection confirmed that there were \textbf{no missing
+values} in either the predictor or the outcome variables.
+
+To ensure data consistency, rows containing missing values (if any) were
+removed using appropriate filtering techniques, resulting in a
+complete-case dataset suitable for regression analysis.
+\begin{verbatim}
+df <- df |> drop_na(all_of(key_cols))
+df <- df |> distinct()
+\end{verbatim}
+\subsection{Removing Duplicates}
+
+Duplicate entries in the dataset were identified and removed using
+standard data cleaning methods. After this step, the dataset retained
+\textbf{114{,}000 unique track observations}, ensuring that each record
+represented a distinct track.
+
+\subsection{Data Type Verification}
+
+The data types of all variables were examined to ensure correctness.
+All audio feature variables were found to be numeric, while the
+\texttt{popularity} variable was stored as an integer. Since the data
+types were already appropriate, no further conversion was required.
+
+\subsection{Feature Selection}
+
+A total of nine variables were selected for the regression analysis
+based on their theoretical relevance and prior research. The variable
+\texttt{popularity} was used as the dependent (target) variable, while
+the following features were used as predictors:
+
+\texttt{danceability}, \texttt{energy}, \texttt{valence},
+\texttt{acousticness}, \texttt{instrumentalness},
+\texttt{speechiness}, \texttt{tempo}, and \texttt{loudness}.
+% =============================================================
+\section{Exploratory Data Analysis}
+% =============================================================
+
+\subsection{Summary Statistics}
+
+Descriptive statistics for the nine key variables are presented in
+Table 3.
+
+\begin{table}[ht]
+\centering
+
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Variable}   & \textbf{Min}  & \textbf{Q1}  & \textbf{Median}
+                    & \textbf{Mean} & \textbf{Max} \\
+\midrule
+popularity          & 0.00  & 17.00  & 35.00  & 33.24  & 100.00 \\
+danceability        & 0.000 & 0.456  & 0.580  & 0.567  & 0.985  \\
+energy              & 0.000 & 0.472  & 0.685  & 0.641  & 1.000  \\
+valence             & 0.000 & 0.260  & 0.464  & 0.474  & 0.995  \\
+acousticness        & 0.000 & 0.017  & 0.169  & 0.315  & 0.996  \\
+instrumentalness    & 0.000 & 0.000  & 0.000  & 0.156  & 1.000  \\
+speechiness         & 0.000 & 0.036  & 0.049  & 0.085  & 0.965  \\
+tempo (BPM)         & 0.00  & 99.22  & 122.02 & 122.15 & 243.37 \\
+loudness (dBFS)     & $-$49.53 & $-$10.01 & $-$7.00 & $-$8.26 & 4.53 \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.3cm}
+
+{\centering \textit{Table 3: Summary statistics for key variables ($n = 114{,}000$)}\par}
+
+\label{tab:summary}
+
+\end{table}
+
+\subsection{Distribution of Popularity}
+
+The popularity values range from 0 to 100, with a mean of 33.24 and a
+standard deviation of 22.31. The median value is 35, indicating that most
+tracks fall in the low-to-moderate popularity range.
+
+A noticeable concentration of tracks at zero popularity suggests the
+presence of inactive or less-streamed tracks. The histogram (Figure 1)
+visually confirms this pattern, showing a slightly skewed distribution
+with a large number of low-popularity observations.
+
+\subsection{Distribution of Audio Features}
+
+The analysis of individual audio features reveals the following patterns:
+
+\begin{itemize}
+  \item \textbf{Danceability} (mean = 0.567) shows moderate-to-high values,
+        indicating that many tracks are rhythmically suitable for dancing.
+        
+  \item \textbf{Energy} (mean = 0.641) is relatively high, reflecting the
+        dominance of energetic and amplified music in modern streaming.
+        
+  \item \textbf{Valence} (mean = 0.474) is close to the midpoint,
+        suggesting a balanced mix of positive and neutral emotional tones.
+        
+  \item \textbf{Instrumentalness} (mean = 0.156) is highly skewed towards zero,
+        indicating that most tracks contain vocals.
+        
+  \item \textbf{Loudness} ranges from $-49.53$ to $+4.53$ dBFS, with a mean
+        of $-8.26$ dBFS, consistent with contemporary loudness standards.
+\end{itemize}
+
+\subsection{Genre-Based Analysis}
+
+Although the regression models in this study focus on track-level
+features, the dataset also includes a \texttt{track\_genre} variable.
+Analyzing genre-wise differences in popularity can provide additional
+insights and is identified as a potential extension of this work, as
+discussed in Section~\ref{sec:future}.
+% =============================================================
+% =============================================================
+\section{Statistical Analysis}
+% =============================================================
+
+\subsection{Correlation Analysis}
+
+Pairwise Pearson correlations were computed among all nine variables.
+The complete correlation matrix is presented in Table 4.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+ & pop. & dance. & energy & valence & acous & instr & speech & tempo & loud \\
+\midrule
+popularity       & 1.000 & 0.035 & 0.001 & -0.041 & -0.025 & -0.095 & -0.045 & 0.013 & 0.050 \\
+danceability     & 0.035 & 1.000 & 0.134 & 0.477 & -0.172 & -0.186 & 0.109 & -0.050 & 0.259 \\
+energy           & 0.001 & 0.134 & 1.000 & 0.259 & -0.734 & -0.182 & 0.143 & 0.248 & 0.762 \\
+valence          & -0.041 & 0.477 & 0.259 & 1.000 & -0.107 & -0.324 & 0.037 & 0.078 & 0.280 \\
+acousticness     & -0.025 & -0.172 & -0.734 & -0.107 & 1.000 & 0.104 & -0.002 & -0.208 & -0.590 \\
+instrumentalness & -0.095 & -0.186 & -0.182 & -0.324 & 0.104 & 1.000 & -0.090 & -0.050 & -0.433 \\
+speechiness      & -0.045 & 0.109 & 0.143 & 0.037 & -0.002 & -0.090 & 1.000 & 0.017 & 0.061 \\
+tempo            & 0.013 & -0.050 & 0.248 & 0.078 & -0.208 & -0.050 & 0.017 & 1.000 & 0.212 \\
+loudness         & 0.050 & 0.259 & 0.762 & 0.280 & -0.590 & -0.433 & 0.061 & 0.212 & 1.000 \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.4em}
+\begin{center}
+\textit{Table 4: Pearson correlation matrix for key variables}
+\end{center}
+
+\end{table}
+
+\subsection{Correlation Matrix Interpretation}
+
+The correlation values between individual audio features and popularity
+are relatively small, indicating weak linear relationships. The strongest
+correlation (in absolute terms) is observed between
+\texttt{instrumentalness} and popularity ($r = -0.095$), followed by
+\texttt{speechiness} ($r = -0.045$), \texttt{valence} ($r = -0.041$),
+and \texttt{loudness} ($r = 0.050$).
+
+Interestingly, \texttt{energy} shows almost no direct correlation with
+popularity ($r = 0.001$). However, it appears as a statistically
+significant predictor in the regression model. This indicates that the
+effect of energy becomes more apparent when other variables are taken
+into account.
+
+Strong relationships are observed among predictor variables themselves.
+For example, \texttt{energy} and \texttt{loudness} show a high positive
+correlation ($r = 0.762$), while \texttt{energy} and
+\texttt{acousticness} show a strong negative correlation
+($r = -0.734$). These patterns suggest that some features capture similar
+underlying musical properties.
+
+\subsection{Feature Relationships}
+
+Scatter plots of \texttt{danceability} versus popularity and
+\texttt{energy} versus popularity (Figure~\ref{fig:dance_pop} and 
+Figure~\ref{fig:energy_pop}) show weak but
+noticeable trends. While higher danceability is slightly associated with
+increased popularity, energy shows a less consistent relationship. In
+both cases, a high degree of dispersion is observed, indicating that
+audio features alone do not strongly determine popularity.
+
+% =============================================================
+% =============================================================
+\section{Data Visualization}
+% =============================================================
+
+\subsection{Overview of Visual Analysis}
+
+To better understand the relationships between audio features and song
+popularity, multiple visualizations were created using \texttt{ggplot2}.
+These plots help in identifying patterns, trends, and differences that
+may not be immediately visible through numerical analysis alone.
+
+% -------------------------------------------------------------
+
+\subsection{Distribution of Song Popularity}
+
+The distribution of the popularity variable was analysed using a
+histogram with 50 bins. The popularity values range from 0 to 100,
+with a mean of 33.24.
+
+The distribution is slightly right-skewed, with a noticeable concentration
+of tracks at lower popularity levels. A significant number of tracks
+have very low or zero popularity, indicating that only a small portion
+of songs achieve high engagement on the platform. This spike at zero is likely attributable to inactive, historical, or 
+regional tracks that have accumulated little to no recent streaming 
+activity on the platform.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{popularity_dist.png}
+\caption{Distribution of song popularity}
+\label{fig:pop_hist}
+\end{figure}
+
+% -------------------------------------------------------------
+
+\subsection{Danceability vs Popularity}
+
+A scatter plot of danceability against popularity, along with a fitted
+linear trend line, was used to examine their relationship.
+
+A weak positive relationship is observed, suggesting that songs with
+higher danceability tend to have slightly higher popularity. However,
+the large spread of data points indicates that danceability alone is
+not a strong predictor of popularity.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{dancebility_pop.png}
+\caption{Danceability vs popularity}
+\label{fig:dance_pop}
+\end{figure}
+
+% -------------------------------------------------------------
+
+\subsection{Energy vs Popularity}
+
+The relationship between energy and popularity was analysed using a
+scatter plot with a linear trend line.
+
+The plot shows almost no visible linear trend, which is consistent with
+the near-zero correlation value. Although energy does not appear strongly
+related to popularity individually, it contributes to the model when
+combined with other features. This is a classic example of a suppression effect, where the true 
+influence of a variable is masked at the bivariate level but becomes 
+statistically significant in the presence of correlated predictors 
+such as \texttt{loudness} ($r = 0.762$).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{energy_pop.png}
+\caption{Energy vs popularity}
+\label{fig:energy_pop}
+\end{figure}
+
+% -------------------------------------------------------------
+
+\subsection{Correlation Heatmap}
+
+A correlation heatmap was used to visualise relationships among all key
+variables.
+
+Strong positive correlation is observed between \texttt{energy} and 
+\texttt{loudness} ($r = 0.762$), while a strong negative correlation 
+exists between \texttt{energy} and \texttt{acousticness} ($r = -0.734$). 
+The strongest correlation with popularity is observed for 
+\texttt{instrumentalness} ($r = -0.095$), which remains notably weak, 
+confirming that no single audio feature is a strong linear predictor 
+of popularity.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{correlation_heatmap.png}
+\caption{Correlation heatmap of audio features}
+\label{fig:heatmap}
+\end{figure}
+
+% -------------------------------------------------------------
+
+\subsection{Popular vs Non-Popular Songs}
+
+Box plots were used to compare audio features between popular
+(popularity $\geq 60$) and non-popular songs (popularity $< 60$).
+
+Popular songs generally show higher danceability and lower
+instrumentalness and speechiness. These differences support the
+regression findings and suggest that songs with clearer vocals and
+better rhythm tend to perform better.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{pop_non_pop.png}
+\caption{Comparison of audio features between popular and non-popular songs}
+\label{fig:boxplot}
+\end{figure}
+
+% -------------------------------------------------------------
+
+\subsection{Model Comparison Visualization}
+
+The comparison of $R^2$ and Adjusted $R^2$ across the three regression
+models is shown below.
+
+A clear improvement is observed from Model 1 to Model 2, while Model 3
+shows only a slight increase. This indicates that most of the explanatory
+power is contributed by the first two blocks of features.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{r2_comparisons.png}
+\caption{$R^2$ and Adjusted $R^2$ across regression models}
+\label{fig:r2}
+\end{figure}
+
+\subsection{Combined Research Dashboard}
+
+All seven visualisations were assembled into a single unified dashboard
+using the \texttt{patchwork} package, providing a comprehensive overview
+of the analysis. The dashboard presents the popularity distribution,
+scatter plots, box plots, model comparison, regression coefficients,
+and correlation heatmap in a single layout, making it easier to
+interpret the findings holistically.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{spotify_dashboard.png}
+\caption{Combined research dashboard — Spotify audio features analysis}
+\label{fig:dashboard}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+% =============================================================
+\section{Results}
+% =============================================================
+
+\subsection{Model Comparison}
+
+Table 5 presents the fit statistics for all three
+hierarchical regression models.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\textbf{Model} 
+  & \textbf{$R^2$} 
+  & \textbf{Adj.\ $R^2$} 
+  & \textbf{AIC} 
+  & \textbf{$F$} 
+  & \textbf{df} 
+  & \textbf{$p$} \\
+\midrule
+Model 1 (Block 1) & 0.0057 & 0.0056 & 1{,}030{,}778 & 216 & (3, 113996)   & $<0.001$ \\
+Model 2 (Block 1+2) & 0.0218 & 0.0218 & 1{,}028{,}917 & 424 & (6, 113993) & $<0.001$ \\
+Model 3 (Full)      & 0.0224 & 0.0223 & 1{,}028{,}857 & 326 & (8, 113991) & $<0.001$ \\
+\bottomrule
+\end{tabular}
+\vspace{0.3cm}
+
+{\centering \textit{Table 5: Hierarchical regression model fit statistics.
+Block 1 = danceability, energy, valence.
+Block 2 = acousticness, instrumentalness, speechiness.
+Full model adds tempo and loudness.}\par}
+\label{tab:models}
+\end{table}
+
+All three models were statistically significant, indicating that the
+selected audio features collectively contribute to explaining variations
+in song popularity.
+
+The addition of Block 2 (acoustic texture features) led to a substantial
+increase in explanatory power. The $R^2$ value increased from 0.0057 to
+0.0218, representing an improvement of 0.0161. This increase was highly
+significant, as confirmed by the ANOVA test
+($F(3, 113993) = 627.87$, $p < 2.2 \times 10^{-16}$).
+
+The addition of Block 3 (tempo and loudness) resulted in only a marginal
+increase in $R^2$ to 0.0224. Although this improvement was statistically
+significant ($F(2, 113991) = 32.03$, $p = 1.24 \times 10^{-14}$),
+its practical contribution was relatively small.
+
+Overall, these results indicate that most of the explanatory power comes
+from the first two blocks of features, while additional variables provide
+diminishing returns.
+
+% -------------------------------------------------------------
+
+\subsection{Coefficient Analysis --- Full Model}
+
+Table 6 presents the regression coefficients for the full
+model (Model 3), including estimates, standard errors, $t$-values,
+$p$-values, and 95\% confidence intervals.
+
+All predictors in the model were found to be statistically significant.
+
+\begin{table}[ht]
+\centering
+
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Predictor} & \textbf{Est.} & \textbf{SE}
+  & \textbf{$t$} & \textbf{$p$}
+  & \textbf{95\% CI lower} & \textbf{95\% CI upper} \\
+\midrule
+(Intercept)       &  36.10 & 0.656  &  54.9  & $< 0.001$ &  34.80 &  37.30 \\
+danceability      &   8.91 & 0.455  &  19.6  & $< 0.001$ &   8.02 &   9.80 \\
+energy            &  $-$2.33 & 0.524 & $-$4.44 & $< 0.001$ & $-$3.36 & $-$1.30 \\
+valence           &  $-$9.64 & 0.313 & $-$30.8 & $< 0.001$ & $-$10.30 & $-$9.03 \\
+acousticness      &  $-$0.97 & 0.302 & $-$3.20 & 0.0014    & $-$1.56  & $-$0.38 \\
+instrumentalness  &  $-$8.31 & 0.254 & $-$32.8 & $< 0.001$ & $-$8.80  & $-$7.81 \\
+speechiness       & $-$12.00 & 0.645 & $-$18.6 & $< 0.001$ & $-$13.20 & $-$10.70 \\
+tempo             &   0.014 & 0.002 &   6.19 & $< 0.001$ &   0.010  &   0.019 \\
+loudness          &   0.110 & 0.024 &   4.69 & $< 0.001$ &   0.064  &   0.156 \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.3cm}
+
+{\centering \textit{Table 6: OLS regression coefficients for the full model (Model 3), $n = 114{,}000$}\par}
+
+\label{tab:coeff}
+
+\end{table}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{coeffecients.png}
+\caption{Regression coefficients with 95\% confidence intervals (Model 3)}
+\label{fig:coeff}
+\end{figure}
+
+Among the predictors, \textbf{danceability} showed the strongest positive
+association with popularity, indicating that more danceable songs tend
+to perform better.
+
+In contrast, \textbf{speechiness}, \textbf{valence}, and
+\textbf{instrumentalness} exhibited strong negative relationships with
+popularity. This suggests that songs with excessive spoken content,
+higher emotional positivity, or fewer vocals tend to perform less well.
+
+\textbf{Loudness} and \textbf{tempo} had small but positive effects,
+indicating that slightly louder and faster songs may have a marginal
+advantage.
+
+Despite all predictors being statistically significant, the overall
+$R^2$ value (0.0224) remains low. This indicates that audio features
+alone explain only a small portion of the variation in song popularity,
+suggesting the influence of external factors such as marketing, artist
+popularity, and release timing.
+% =============================================================
+\section{Inferences and Insights}
+% =============================================================
+
+The results of the analysis provide several important insights into how
+different audio features relate to song popularity.
+
+\begin{itemize}
+
+  \item \textbf{Danceability is the strongest positive predictor.}
+        A one-unit increase in danceability (on a 0--1 scale) is associated
+        with an increase of approximately 8.91 points in popularity
+        ($p < 0.001$, 95\% CI [8.02, 9.80]). This indicates that
+        rhythm-focused and dance-friendly tracks tend to attract more
+        listeners and perform better on streaming platforms.
+
+  \item \textbf{Speechiness has the strongest negative impact.}
+        Speechiness shows the largest negative effect
+        ($\hat{\beta} = -12.00$, 95\% CI $[-13.2, -10.7]$), suggesting
+        that tracks with higher spoken-word content are generally less
+        popular. This may be because the popularity metric mainly reflects
+        music consumption rather than spoken content.
+
+  \item \textbf{Instrumental tracks are less popular.}
+        Instrumentalness has a strong negative association with popularity
+        ($\hat{\beta} = -8.31$, $p < 0.001$), indicating that songs without
+        vocals tend to receive fewer streams compared to vocal-based tracks.
+        This reflects the dominance of vocal music in mainstream listening.
+
+  \item \textbf{Valence shows an unexpected negative relationship.}
+        Valence, which represents musical positivity, has a negative effect
+        ($\hat{\beta} = -9.64$, $p < 0.001$). This suggests that highly
+        positive or cheerful songs are not necessarily more popular.
+        Emotionally complex or slightly melancholic tracks may engage
+        listeners more deeply, leading to higher popularity.
+
+  \item \textbf{Energy and acousticness have smaller but significant effects.}
+        Energy shows a moderate negative effect ($\hat{\beta} = -2.33$,
+        $p < 0.001$), while acousticness has a small negative effect
+        ($\hat{\beta} = -0.97$, $p = 0.0014$). These features contribute
+        to popularity but are not strong individual predictors.
+
+  \item \textbf{Tempo and loudness show positive contributions.}
+        Both tempo ($\hat{\beta} = 0.014$, $p < 0.001$) and loudness
+        ($\hat{\beta} = 0.110$, $p < 0.001$) have positive coefficients,
+        indicating that faster and slightly louder tracks tend to perform
+        marginally better. However, their impact is relatively small
+        compared to other features.
+
+  \item \textbf{Overall explanatory power is limited.}
+        The overall $R^2$ value of 0.0224 indicates that the model explains
+        only 2.24\% of the variation in popularity. This highlights that
+        audio features alone are not sufficient to determine a song's
+        success. Other factors such as artist popularity, marketing
+        strategies, playlist placement, and social media influence likely
+        play a much more significant role in driving streaming performance
+        \citep{interiano2018}.
+
+\end{itemize}
+
+% =============================================================
+\section{Conclusion}
+% =============================================================
+
+This study applied a hierarchical OLS regression framework in R to
+analyze the relationship between Spotify audio features and song
+popularity across a dataset of 114{,}000 tracks.
+
+The results show that all selected audio features are statistically
+significant predictors of popularity. The inclusion of additional
+feature blocks led to measurable improvements in model performance,
+as confirmed by highly significant ANOVA tests
+($F(3, 113993) = 627.87$, $p < 2.2 \times 10^{-16}$ for Block 2;
+$F(2, 113991) = 32.03$, $p = 1.24 \times 10^{-14}$ for Block 3). However, despite
+this statistical significance, the overall explanatory power of the
+model remains limited, with an $R^2$ value of 0.0224.
+
+Among the features, danceability emerged as the strongest positive
+predictor, while speechiness, instrumentalness, and valence showed
+strong negative relationships with popularity. These findings suggest
+that songs with strong rhythm, clear vocals, and balanced emotional
+tones are more likely to perform well on streaming platforms.
+
+At the same time, the relatively low $R^2$ highlights an important
+insight: audio features alone cannot fully explain song popularity.
+External factors such as artist reputation, marketing strategies,
+playlist placement, and audience trends likely play a much more
+significant role \citep{interiano2018}.
+
+Future work incorporating such variables alongside audio features 
+could substantially improve predictive accuracy and provide a 
+more complete picture of what drives success in the streaming era.
+
+Overall, this study demonstrates the usefulness of data-driven
+approaches in understanding music trends, while also emphasizing
+the complexity of predicting popularity in the digital music
+ecosystem.
+
+% =============================================================
+\section{Future Scope}
+\label{sec:future}
+% =============================================================
+
+The present study can be extended in several meaningful directions to
+improve both the depth and accuracy of the analysis.
+
+\begin{enumerate}
+
+  \item \textbf{Genre-wise Analysis.}  
+  Performing separate analyses for different music genres (such as pop,
+  rock, hip-hop, and classical) can help determine whether the influence
+  of audio features on popularity varies across genres. The \texttt{track\_genre} variable available in the dataset 
+provides a natural starting point for such an analysis.
+
+  \item \textbf{Advanced Machine Learning Models.}  
+  Using non-linear models such as decision trees, random forests, or
+  gradient boosting techniques can help capture complex relationships
+  and interactions between variables that are not detected by linear
+  regression.
+
+  \item \textbf{Temporal Trend Analysis.}  
+  Incorporating time-based data can help analyze how music preferences
+  and feature importance have evolved over the years. This would provide
+  insights into changing listener behavior and industry trends.
+
+  \item \textbf{Inclusion of External Factors.}  
+  Adding variables such as artist popularity, playlist inclusion,
+  release timing, and marketing influence can significantly improve
+  the predictive power of the model and provide a more realistic
+  understanding of song success. Given that the full model achieved an $R^2$ of only 0.0224, 
+the inclusion of such external variables could substantially 
+improve explanatory power.
+
+  \item \textbf{Feature Engineering and Dimensionality Reduction.}  
+  Techniques such as Principal Component Analysis (PCA) can be used to
+  reduce redundancy among correlated variables (e.g., energy and
+  loudness) and identify underlying patterns in the data.
+\item \textbf{Integration with User Behaviour Data.}
+        Combining audio features with user interaction data such as
+        skip rates, playlist saves, and listening duration could
+        provide a richer understanding of what drives engagement
+        beyond popularity scores alone.
+\end{enumerate}
+
+% =============================================================
+\section{R Implementation (Code Snippets)}
+% =============================================================
+
+This section presents key code snippets used in the analysis. The complete
+R script is provided as supplementary material.
+
+\subsection{Data Loading and Cleaning}
+
+\begin{lstlisting}
+library(tidyverse)
+library(janitor)
+
+df <- read_csv("spotify_tracks.csv") |>
+      clean_names() |>
+      drop_na(popularity, danceability, energy, valence,
+              acousticness, instrumentalness, speechiness,
+              tempo, loudness) |>
+      distinct()
+\end{lstlisting}   
+
+
+\subsection{Hierarchical Regression Models}
+
+\begin{lstlisting}  
+model1 <- lm(popularity ~ danceability + energy + valence,
+             data = df)
+
+model2 <- lm(popularity ~ danceability + energy + valence +
+               acousticness + instrumentalness + speechiness,
+             data = df)
+
+model3 <- lm(popularity ~ danceability + energy + valence +
+               acousticness + instrumentalness + speechiness +
+               tempo + loudness,
+             data = df)
+
+anova(model1, model2, model3)
+\end{lstlisting}
+
+
+\subsection{Model Comparison Metrics}
+
+\begin{lstlisting}
+extract_fit <- function(model, label) {
+  s <- summary(model)
+  tibble(
+    Model  = label,
+    R2     = s$r.squared,
+    Adj_R2 = s$adj.r.squared,
+    AIC    = AIC(model)
+  )
+}
+
+model_comparison <- bind_rows(
+  extract_fit(model1, "Model 1"),
+  extract_fit(model2, "Model 2"),
+  extract_fit(model3, "Model 3")
+)
+\end{lstlisting}
+
+
+\subsection{ANOVA Model Comparison}
+
+\begin{lstlisting}
+anova_result <- anova(model1, model2, model3)
+print(anova_result)
+\end{lstlisting}
+
+
+\subsection{Coefficient Extraction}
+
+\begin{lstlisting}
+library(broom)
+
+coeff_table <- tidy(model3,
+                    conf.int = TRUE,
+                    conf.level = 0.95)
+\end{lstlisting}
+
+
+\subsection{Popular vs Non-Popular Classification}
+
+\begin{lstlisting}
+df <- df |>
+  mutate(popular_cat = ifelse(popularity >= 60,
+                              "Popular",
+                              "Non-Popular"))
+\end{lstlisting}
+
+
+\subsection{Data Visualization (Example)}
+
+\begin{lstlisting}
+ggplot(df, aes(x = danceability, y = popularity)) +
+  geom_point(alpha = 0.2, color = "#1DB954") +
+  geom_smooth(method = "lm", color = "black") +
+  labs(title = "Danceability vs Popularity")
+\end{lstlisting}
+
+\subsection{Correlation Heatmap}
+
+\begin{lstlisting}
+library(corrplot)
+
+corr_matrix <- cor(df |> select(popularity, danceability, energy,
+                               valence, acousticness,
+                               instrumentalness, speechiness,
+                               tempo, loudness))
+
+corrplot(corr_matrix, method = "color", type = "upper")
+\end{lstlisting}
+
+
+\subsection{Combined Dashboard}
+
+\begin{lstlisting}
+library(patchwork)
+dashboard <- (p1 | p2 | p3) /
+             (p4 | p5) /
+             (p6 | p7)
+ggsave("spotify_dashboard.png", dashboard,
+        width = 18, height = 16, dpi = 150)
+\end{lstlisting}
+
+
+\subsection{Saving Output Files}
+
+\begin{lstlisting}
+write_csv(df, "spotify_clean.csv")
+write_csv(model_comparison, "model_comparison.csv")
+write_csv(coeff_table, "coefficients.csv")
+\end{lstlisting}
+
+% =============================================================
+% =============================================================
+
+% =============================================================
+
+\bibliographystyle{plainnat}
+\bibliography{RJreferences}
+% =============================================================
+%  AUTHOR ADDRESS
+% =============================================================
+
+\end{document}
